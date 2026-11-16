@@ -1,7 +1,7 @@
 # DocuMind AI
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anmolvishvas/DocuMind-AI/main/docs/assets/logo.png" alt="DocuMind AI Logo" width="140" height="140" onerror="this.style.display='none'"/>
+  <img src="docs/assets/logo.png" alt="DocuMind AI Logo" width="480" style="border-radius: 12px;"/>
 </p>
 
 <h3 align="center"><strong>An AI-powered API documentation intelligence platform that enables developers to understand, explore, search, troubleshoot, and interact with API documentation using natural language.</strong></h3>
