@@ -1,0 +1,21 @@
+name: PR Audit
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  conventional-title:
+    name: Conventional Commit PR title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "$TITLE" | grep -Eq '^(feat|fix|docs|chore|refactor|test|ci|build|perf)(\([a-z0-9-]+\))?: .+' \
+            || { echo "PR title must follow Conventional Commits"; exit 1; }
