@@ -4,6 +4,8 @@ Models inherit from :class:`Base` and use ``Mapped[...]`` / ``mapped_column(...)
 ``Base.metadata`` is the single registry Alembic will target for autogeneration.
 """
 
+import uuid
+
 from sqlalchemy import MetaData
 from sqlalchemy.orm import DeclarativeBase
 
@@ -15,6 +17,11 @@ NAMING_CONVENTION: dict[str, str] = {
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     "pk": "pk_%(table_name)s",
 }
+
+
+def generate_uuid() -> str:
+    """Return a new random UUID as its 36-character string form (the primary-key format)."""
+    return str(uuid.uuid4())
 
 
 class Base(DeclarativeBase):

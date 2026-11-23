@@ -2,11 +2,13 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import health
+from app.api.v1 import documents, health
 
 # Probes live at the root (/health, /ready), as required by TASK-105.
 # Versioned business APIs will be added to ``api_v1_router`` (prefix /api/v1) by later tasks.
 api_v1_router = APIRouter(prefix="/api/v1")
+
+api_v1_router.include_router(documents.router)
 
 api_router = APIRouter()
 api_router.include_router(health.router)
