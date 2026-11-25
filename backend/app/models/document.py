@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, generate_uuid
 
 if TYPE_CHECKING:
+    from app.models.chunk import DocumentChunk
     from app.models.endpoint import Endpoint
     from app.models.project import Project
 
@@ -50,7 +51,7 @@ def _enum_column(enum_class: type[StrEnum]) -> Enum:
 
 
 class Document(Base):
-    """An uploaded file belonging to one project. Deleting it cascades to its endpoints."""
+    """An uploaded file of one project. Deleting it cascades to its endpoints and chunks."""
 
     __tablename__ = "documents"
     __mapper_args__ = {"eager_defaults": True}  # noqa: RUF012  (see Project)
@@ -84,6 +85,12 @@ class Document(Base):
 
     project: Mapped["Project"] = relationship(back_populates="documents", lazy="raise")
     endpoints: Mapped[list["Endpoint"]] = relationship(
+        back_populates="document",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        lazy="raise",
+    )
+    chunks: Mapped[list["DocumentChunk"]] = relationship(
         back_populates="document",
         cascade="all, delete-orphan",
         passive_deletes=True,

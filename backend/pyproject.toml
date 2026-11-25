@@ -21,6 +21,7 @@ dependencies = [
     "pydantic-settings>=2.6,<3.0",
     "python-multipart>=0.0.12",  # required by FastAPI for UploadFile
     "aiofiles>=24.1",  # non-blocking file I/O (docs/RULES.md section 3)
+    "tiktoken>=0.8,<1.0",  # token counting for chunk budgets (docs/RULES.md section 4)
 ]
 
 [project.optional-dependencies]

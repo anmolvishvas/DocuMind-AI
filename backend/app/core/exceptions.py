@@ -55,3 +55,42 @@ class FileTooLargeError(InvalidUploadError):
 
     def __init__(self, message: str) -> None:
         super().__init__(message, "FILE_TOO_LARGE")
+
+
+class ChunkingError(DocuMindException):
+    """Raised when chunking cannot run: invalid size settings or an unavailable tokenizer."""
+
+    status_code = 500
+
+    def __init__(self, message: str, code: str = "CHUNKING_ERROR") -> None:
+        super().__init__(message, code)
+
+
+class EmbeddingError(DocuMindException):
+    """Raised when embeddings cannot be generated: invalid input, provider error or bad response.
+
+    The provider's own error is chained, never copied into the message.
+    """
+
+    status_code = 502
+
+    def __init__(self, message: str, code: str = "EMBEDDING_ERROR") -> None:
+        super().__init__(message, code)
+
+
+class RetrievalError(DocuMindException):
+    """Raised when a vector search is given invalid input (project, query, top_k, embedding)."""
+
+    status_code = 400
+
+    def __init__(self, message: str, code: str = "RETRIEVAL_ERROR") -> None:
+        super().__init__(message, code)
+
+
+class EmbeddingRateLimitError(EmbeddingError):
+    """Raised when the embedding provider keeps rate limiting after all retries."""
+
+    status_code = 503
+
+    def __init__(self, message: str, code: str = "EMBEDDING_RATE_LIMITED") -> None:
+        super().__init__(message, code)

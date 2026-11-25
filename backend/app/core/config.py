@@ -58,7 +58,9 @@ class Settings(BaseSettings):
     openai_timeout: float = Field(default=30.0, gt=0, description="OpenAI request timeout (s).")
     embedding_model: str = Field(default="text-embedding-3-small", min_length=1)
     embedding_dimensions: int = Field(default=1536, gt=0)
-    embedding_batch_size: int = Field(default=64, ge=1, le=2048)
+    embedding_batch_size: int = Field(
+        default=64, ge=1, le=64, description="Chunks per embedding request (max 64)."
+    )
     chat_model: str = Field(default="gpt-4o-mini", min_length=1)
 
     # --- Retrieval & ingestion ----------------------------------------
