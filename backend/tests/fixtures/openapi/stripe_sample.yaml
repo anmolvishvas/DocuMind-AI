@@ -1,0 +1,285 @@
+# Representative excerpt of the Stripe OpenAPI spec: the structural patterns that make the
+# real document hard (mutually recursive objects, anyOf "expandable" fields, form-encoded
+# bodies, x- extensions, a shared error schema, deeply nested references).
+openapi: 3.0.0
+info:
+  title: Stripe API
+  version: 2024-06-20
+paths:
+  /v1/customers:
+    get:
+      summary: List all customers
+      description: Returns a list of your customers.
+      operationId: GetCustomers
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: expand
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              maxLength: 5000
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            encoding: {}
+            schema:
+              additionalProperties: false
+              properties: {}
+              type: object
+        required: false
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, has_more, object, url]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/customer'
+                  has_more:
+                    type: boolean
+                  object:
+                    enum: [list]
+                    type: string
+                  url:
+                    type: string
+        default:
+          description: Error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+    post:
+      summary: Create a customer
+      operationId: PostCustomers
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  maxLength: 512
+                metadata:
+                  anyOf:
+                    - type: object
+                      additionalProperties:
+                        type: string
+                    - enum: ['']
+                      type: string
+        required: false
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/customer'
+        default:
+          description: Error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  /v1/customers/{customer}:
+    get:
+      summary: Retrieve a customer
+      operationId: GetCustomersCustomer
+      parameters:
+        - name: customer
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 5000
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/customer'
+                  - $ref: '#/components/schemas/deleted_customer'
+        default:
+          description: Error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  /v1/charges/{charge}:
+    get:
+      summary: Retrieve a charge
+      operationId: GetChargesCharge
+      parameters:
+        - name: charge
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/charge'
+        default:
+          description: Error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+components:
+  schemas:
+    error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          $ref: '#/components/schemas/api_errors'
+    api_errors:
+      type: object
+      required: [type]
+      properties:
+        message:
+          type: string
+        type:
+          enum: [api_error, card_error, invalid_request_error]
+          type: string
+        charge:
+          type: string
+        payment_intent:
+          $ref: '#/components/schemas/payment_intent'
+    address:
+      type: object
+      properties:
+        city:
+          nullable: true
+          type: string
+        country:
+          nullable: true
+          type: string
+      x-resourceId: address
+    customer:
+      type: object
+      required: [id, object]
+      x-resourceId: customer
+      x-expandableFields: [default_source]
+      properties:
+        id:
+          type: string
+        object:
+          enum: [customer]
+          type: string
+        address:
+          anyOf:
+            - $ref: '#/components/schemas/address'
+          nullable: true
+        default_source:
+          anyOf:
+            - maxLength: 5000
+              type: string
+            - $ref: '#/components/schemas/payment_source'
+          nullable: true
+          x-expansionResources:
+            oneOf:
+              - $ref: '#/components/schemas/payment_source'
+        metadata:
+          type: object
+          additionalProperties:
+            maxLength: 500
+            type: string
+    deleted_customer:
+      type: object
+      required: [deleted, id, object]
+      properties:
+        deleted:
+          enum: [true]
+          type: boolean
+        id:
+          type: string
+        object:
+          enum: [customer]
+          type: string
+    payment_source:
+      anyOf:
+        - $ref: '#/components/schemas/card'
+      x-stripeBypassValidation: true
+    card:
+      type: object
+      properties:
+        id:
+          type: string
+        # card -> customer -> payment_source -> card is a reference cycle
+        customer:
+          anyOf:
+            - maxLength: 5000
+              type: string
+            - $ref: '#/components/schemas/customer'
+            - $ref: '#/components/schemas/deleted_customer'
+          nullable: true
+          x-expansionResources:
+            oneOf:
+              - $ref: '#/components/schemas/customer'
+    charge:
+      type: object
+      required: [id, amount]
+      properties:
+        id:
+          type: string
+        amount:
+          type: integer
+        billing_details:
+          $ref: '#/components/schemas/billing_details'
+        customer:
+          anyOf:
+            - maxLength: 5000
+              type: string
+            - $ref: '#/components/schemas/customer'
+          nullable: true
+        payment_intent:
+          anyOf:
+            - maxLength: 5000
+              type: string
+            - $ref: '#/components/schemas/payment_intent'
+          nullable: true
+    billing_details:
+      type: object
+      properties:
+        address:
+          $ref: '#/components/schemas/address'
+        email:
+          nullable: true
+          type: string
+    payment_intent:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        latest_charge:
+          anyOf:
+            - maxLength: 5000
+              type: string
+            - $ref: '#/components/schemas/charge'
+          nullable: true
+        customer:
+          anyOf:
+            - maxLength: 5000
+              type: string
+            - $ref: '#/components/schemas/customer'
+          nullable: true

@@ -70,6 +70,7 @@ yarn-error.log*
 # Databases & Local Storage
 storage/uploads/*
 !storage/uploads/.gitkeep
+**/storage/documents/
 postgres_data/
 
 # Docker overrides
